@@ -12,6 +12,7 @@
 - [박지현](https://github.com/jihyunhillpark)
 - [손민철](https://github.com/Minchul-Son)
 - [전지원](https://github.com/kworkbee)
+- [어해림](https://github.com/Hae-Riri)
 
 ## 📝 Study Rules
 ### 스터디 진행 방식
