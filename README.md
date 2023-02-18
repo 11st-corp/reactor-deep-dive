@@ -17,7 +17,7 @@
 ## 📝 Study Rules
 ### 스터디 진행 방식
 
-Soon
+[WIKI](https://github.com/11st-corp/reactor-deep-dive/wiki/1%ED%9A%8C%EC%B0%A8-%EB%AA%A8%EC%9E%84(2023-2-16))
 
 <br />
 <hr />
