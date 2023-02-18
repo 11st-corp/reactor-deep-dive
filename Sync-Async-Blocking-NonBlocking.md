@@ -1,0 +1,36 @@
+# Sync / Async & Blocking / Non-Blocking?
+
+- Synchronous / Asynchronous
+  - **결과가 반환될 때 순서와 결과에 관심이 있는지 여부에 초점**
+  - Synchronous
+    - **작업을 동시에 수행하거나 / 끝나거나 / 끝나는 동시에 시작함**을 의미
+    - 호출하는 함수가 해당 작업 결과 값을 받아서 다음 작업을 수행 (Main 스트림에서 처리)
+  - Asynchronous
+    - **시작과 종료가 일치하지 않고 끝나는 동시에 시작을 하지 않음**을 의미
+    - 별도 Thread에서 처리하거나 Event Handler / Callback function 등을 사용하는 경우
+    - 호출되는 함수는 콜백 등으로 결과 값을 넘겨주는 방식을 활용해 결과 처리
+- Blocking / Non-Blocking
+  - 함수를 호출하고 결과를 기다리는 동안 **함수를 호출한 프로그램 (Caller) 의 상태에 초점**
+  - **제어권을 넘기거나 혹은 그렇지 않음**
+  - Blocking
+    - **결과값을 얻기 전까지 현재 Thread를 정지 (다른 작업을 할 수 없다.)**
+  - Non-Blocking
+    - Thread가 Lock되지 않는다.
+    - 즉, **결과를 받을 때까지 다른 작업이 가능하다.**
+- Cross Table
+  - ![image-20230218213326301](/images/image-20230218213326301.png)
+  - Sync / Blocking
+    - **작업을 요청하고, 해당 작업이 완료되어 결과값이 반환되기까지 다른 작업을 할 수 없다.**
+  - Sync / Non-Blocking
+    - **Caller는 다른 일을 할 수 있지만 틈틈이 요청한 작업 완료 여부를 확인해야 한다.**
+  - Async / Blocking
+    - **대리인을 시켜 해당 작업을 시키며, 대리인은 해당 작업이 완료될 때까지 기다림**
+  - Async / Non-Blocking
+    - **대리인을 시켜 해당 작업을 시키며, 대리인이 해당 작업이 완료될 때까지 기다림. Caller가 틈틈이 곁눈질로 작업 완료 여부를 감시함**
+
+- 운영체제의 입장에서
+  - Blocking / Non-Blocking
+    - CPU를 놓거나 / CPU를 놓지 않음
+    - e.g. I/O 요청을 Blocking으로 처리하는 것은 프로세스가 System Call을 한 뒤 Sleep / Wait 상태로 들어간 후 (그동안 CPU를 놓아 아무것도 하지 않은 상태) I/O 처리가 완료되면 Interrupt가 발생하며 프로세스가 재개. 반면 Non-Blocking I/O 요청은 프로세스가 CPU를 놓지 않고 다른 작업을 진행하면서 System Call 호출 결과로써 I/O 요청의 완료 여부를 확인함.
+  - Synchronous / Asynchronous
+    - 같은 흐름에서 처리하거나 / 다른 흐름에서 처리하거나
