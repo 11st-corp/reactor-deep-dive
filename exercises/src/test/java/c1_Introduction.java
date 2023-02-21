@@ -2,6 +2,7 @@ import org.junit.jupiter.api.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -41,7 +42,7 @@ public class c1_Introduction extends IntroductionBase {
     public void hello_world() {
         Mono<String> serviceResult = hello_world_service();
 
-        String result = null; //todo: change this line only
+        String result = serviceResult.block(); //todo: change this line only
 
         assertEquals("Hello World!", result);
     }
@@ -55,7 +56,7 @@ public class c1_Introduction extends IntroductionBase {
         Exception exception = assertThrows(IllegalStateException.class, () -> {
             Mono<String> serviceResult = unresponsiveService();
 
-            String result = null; //todo: change this line only
+            String result = serviceResult.block(Duration.ofSeconds(1)); //todo: change this line only
         });
 
         String expectedMessage = "Timeout on blocking read for 1";
@@ -72,7 +73,7 @@ public class c1_Introduction extends IntroductionBase {
     public void empty_service() {
         Mono<String> serviceResult = emptyService();
 
-        Optional<String> optionalServiceResult = null; //todo: change this line only
+        Optional<String> optionalServiceResult = serviceResult.blockOptional(); //todo: change this line only
 
         assertTrue(optionalServiceResult.isEmpty());
         assertTrue(emptyServiceIsCalled.get());
@@ -89,7 +90,7 @@ public class c1_Introduction extends IntroductionBase {
     public void multi_result_service() {
         Flux<String> serviceResult = multiResultService();
 
-        String result = serviceResult.toString(); //todo: change this line only
+        String result = serviceResult.blockFirst(); //todo: change this line only
 
         assertEquals("valid result", result);
     }
@@ -103,7 +104,8 @@ public class c1_Introduction extends IntroductionBase {
     public void fortune_top_five() {
         Flux<String> serviceResult = fortuneTop5();
 
-        List<String> results = emptyList(); //todo: change this line only
+        // FIXME : 틀렸던 문제!
+        List<String> results = serviceResult.collectList().block(); //todo: change this line only
 
         assertEquals(Arrays.asList("Walmart", "Amazon", "Apple", "CVS Health", "UnitedHealth Group"), results);
         assertTrue(fortuneTop5ServiceIsCalled.get());
@@ -126,8 +128,34 @@ public class c1_Introduction extends IntroductionBase {
 
         Flux<String> serviceResult = fortuneTop5();
 
+        //FIXME : 어려웠음!!
+        /**
+         * Rx는 여러 파이프 라인을 조합해서 원하는 동작을 구현하는 개념이고,
+         * subscribe는 파이프라인의 마지막 단에서 호출하기 때문에 다양하게 조합된 파이프의 각 부분에 들어가서 검사를 하거나 로그를 찍는 등의 작업이 필요할 때 onNext나 doOnNext를 사용할 수 있다.
+         *
+         * 기본적으로 do 계열의 함수들은 스트림에 영향을 주지 않고 로그를 쓴다든지 아님 아래처럼 새 리스트에 담는다든지 등의 부수효과를 일으킨다.
+         *
+         * doOnNext :
+         * onNext가 호출된 후, 즉 데이터가 통지되는 시점에 동작하는 연산으로, onNext로 통지된 값을 인자로 받음.
+         * 그러므로 통지된 값을 가지고 별도의 부수효과(바깥 리스트에 넣는다든지, 로그를 기록한다든지)를 적용할 수 있어서 유용하다.
+         *
+         * subscribe:
+         * Flux든 뭐든 만들어서 발행을 했다면 얘를 구독해야 마무리가 된다. 그 구독의 역할을 하는거고,
+         * subscribe()를 호출해야 비로소 변환한 데이터를 구독자에게 발행한다.
+         * just 등으로 발행만 하면 데이터를 발행하지 않는다. 반드시 데이터를 수신할 구독자가 subscribe 함수를 호출해야 데이터가 발행된다.
+         * 구독을 해야 데이터가 발행되니까 subscribe는 데이터를 발행하는 역할이기도 하다.
+         *
+         * ????
+         * 여기서 그럼 누가 구독자야?
+         * doOnNext 까지가 Flux이고, 거기에 대해 subscribe를 하는건데.... 여기서 발행자는 serviceResult아닌가?
+         *
+         * -- 정답
+         * Flux는 생산자(발행자)
+         * Subscriber는 없는 거 아니야? 누군지 모르지만 일단 구독은 한다.?
+         * */
         serviceResult
                 .doOnNext(companyList::add)
+                .subscribe();
         //todo: add an operator here, don't use any blocking operator!
         ;
 
@@ -151,7 +179,10 @@ public class c1_Introduction extends IntroductionBase {
         AtomicReference<Boolean> serviceCallCompleted = new AtomicReference<>(false);
         CopyOnWriteArrayList<String> companyList = new CopyOnWriteArrayList<>();
 
+        //FIXME : 기존 내 답은 doOnNext를 써버림. 근데 문제에서 doOnNext 쓰지 말랬다. subscribe에 옵션을 줄 수 있었음!
+        //파라미터 순서가 정상consumer/에러consumer/다 마친 consumer임.
         fortuneTop5()
+                .subscribe(companyList::add, null, ()-> serviceCallCompleted.set(true));
         //todo: change this line only
         ;
 
