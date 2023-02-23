@@ -23,10 +23,16 @@ public class c2_TransformingSequence extends TransformingSequenceBase {
     /***
      * Your task is simple:
      *  Increment each number emitted by the numerical service
+     *
+     *  map은 기존 시퀀스, 기존 데이터를 변형하는 경우에 사용
+     *  doOnNext는 최종 시퀀스를 수정하지 않고 시퀀스를 일단 엿볼 때 사용함.
+     *
+     *  TODO: FIXME : 둘의 차이가 뭐야???????????????
      */
     @Test
     public void transforming_sequence() {
         Flux<Integer> numbersFlux = numerical_service()
+                .map(e -> e + 1)
                 //todo change only this line
                 ;
 
@@ -42,13 +48,25 @@ public class c2_TransformingSequence extends TransformingSequenceBase {
      *   - ">": if given number is greater than 0
      *   - "=": if number is equal to 0
      *   - "<": if given number is lesser then 0
+     *
+     *   map : 각 항목에 함수를 적용해서 최초 observable에서 내보내는 항목을 변환함.
+     *
+     *
+     *   flatMap : Observable에 의해 여러개로 방출된 항목을 다시 각각 observable로 변환한 다음 하나의 observable로 평면화
+     *
+     *  비교 사진 젤 심플한거 : https://medium.com/javadeveloperdiary-jdd/map-vs-flatmap-java-8-basic-understanding-b73fa1b1b05d
+     *
      */
     @Test
     public void transforming_sequence_2() {
         Flux<Integer> numbersFlux = numerical_service_2();
 
         //todo: do your changes here
-        Flux<String> resultSequence = null;
+        Flux<String> resultSequence = numbersFlux.map(e -> {
+            if(e > 0) return ">";
+            else if(e == 0) return "=";
+            else return "<";
+        });
 
         //don't change code below
         StepVerifier.create(resultSequence)
@@ -65,7 +83,7 @@ public class c2_TransformingSequence extends TransformingSequenceBase {
     @Test
     public void cast() {
         Flux<String> numbersFlux = object_service()
-                .map(i -> (String) i); //todo: change this line only
+                .cast(String.class); //todo: change this line only
 
 
         StepVerifier.create(numbersFlux)
@@ -80,6 +98,7 @@ public class c2_TransformingSequence extends TransformingSequenceBase {
     @Test
     public void maybe() {
         Mono<String> result = maybe_service()
+                .defaultIfEmpty("no results")
                 //todo: change this line only
                 ;
 
@@ -94,8 +113,7 @@ public class c2_TransformingSequence extends TransformingSequenceBase {
      */
     @Test
     public void sequence_sum() {
-        Mono<Integer> sum = null;
-        numerical_service()
+        Mono<Integer> sum = numerical_service().reduce(Integer::sum)
         //todo: do your changes here
         ;
 
@@ -107,10 +125,13 @@ public class c2_TransformingSequence extends TransformingSequenceBase {
     /***
      *  Reduce the values from `numerical_service()` but emit each intermediary number
      *  Use first Flux value as initial value.
+     *
+     *  accumulator : 누적자
      */
     @Test
     public void sum_each_successive() {
         Flux<Integer> sumEach = numerical_service()
+                .scan(Integer::sum)
                 //todo: do your changes here
                 ;
 
@@ -129,7 +150,7 @@ public class c2_TransformingSequence extends TransformingSequenceBase {
     @Test
     public void sequence_starts_with_zero() {
         Flux<Integer> result = numerical_service()
-                //todo: change this line only
+                .startWith(0)
                 ;
 
         StepVerifier.create(result)
