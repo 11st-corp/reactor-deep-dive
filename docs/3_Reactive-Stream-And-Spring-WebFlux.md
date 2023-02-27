@@ -5,7 +5,7 @@
 ![img](https://engineering.linecorp.com/wp-content/uploads/2020/02/reactivestreams1-1.png)
 
 - 전통적 데이터 처리 방식은 데이터 처리 요청이 왔을 때 Payload 전체를 애플리케이션 메모리에 저장한 후 다음 처리를 해야 한다. 추가로 필요한 데이터도 스토리지에서 조회해서 메모리에 로드해야 한다.
-  - 전달된 데이터는 물론 스토리지에서 조회한 데이터까지 모든 데이터가 애플리케이션 메모리에 로드되어야 Response를 만들 수 있다. 필요한 데이터 크기가 메모리 사이즈보다 클 경우 OOM이 발생할 수 있다. 혹은 순간적으로 많은 요청이 몰릴 경우 다량의 GC가 발생해 서버가 정상적으로 응답하기 어렵다.
+  - 전달된 데이터는 물론 스토리지에서 조회한 데이터까지 모든 데이터가 애플리케이션 메모리에 로드되어야 Response를 만들 수 있다. 필요한 데이터 크기가 메모리 사이즈보다 클 경우 OOM(Out Of Memory)이 발생할 수 있다. 혹은 순간적으로 많은 요청이 몰릴 경우 다량의 GC가 발생해 서버가 정상적으로 응답하기 어렵다.
 - 많은 양의 데이터를 처리하는 애플리케이션에 스트림 처리 방식을 적용하면 크기가 작은 시스템 메모리로도 많은 양의 데이터를 처리할 수 있다.
   - 입력 데이터에 대한 파이프라인을 만들어 데이터가 들어오는대로 물 흐르는듯이 Subscribe하고, 처리한 뒤 Publish까지 한 번에 연결하여 처리 가능하다. 이 경우 서버는 많은 양의 데이터도 탄력적인 처리가 가능하다.
 
@@ -108,6 +108,24 @@ public interface Subscription {
    public void cancel();														// 구독 취소
 }
 ```
+### 추가 설명
+- 내가 구독하고 싶은 Publisher가 있으면 걔에 대해서 구독하겠다는 메소드를 호출해. publisher.subscribe()를 실행시켜서 퍼블리셔를 구독함.
+---
+- Subsciber 본인은 본인이 구독할 준비가 되었다며, Subscription을 만들어서 자기가 받을 양을 선언해놔. subscription.request()로.
+  - 그리고 그렇게 만든 subsription을 가지고 Subscriber.onSubscribe(subscription). 나 구독할 준비 됐음!을 말함.
+- Publisher는 요청 받은 개수만큼 subsciber에게 데이터를 통지해. 나를 구독하고 있는 subscriber야, subscriber.onNext(내 데이터);
+- Publisher는 subsriber에게, 나 너에게 데이터 다 통지했어! 라고 알리기 위해서 subsriber.onComplete를 호출해.
+
+메소드를 가지고 있는 애는 메소드 내용 동작의 주체가 아니야. 
+메소드 내용에 해당되는 동작을 실제로 한 애가, 이 동작에 대해 알고 싶은 애한테 알려주는건데, 알고 싶은 애가 그 메소드를 갖고 있는거지. 
+즉, 행동주체가, '행동을알고싶은애.메소드()'를 호출하는 구조
+- subsribe()는 구독하는 행위의 주체는 구독자야. 나를 구독하는지 알고 싶은 건 생성자고.
+  - 따라서 행위의 주체인 구독자가, 생성자.subscribe()를 호출함.
+- onNext()는 데이터를 통지하는 행위야. 행위의 주체는 생성잔데, 이걸 알고 싶은 건 구독자라서 구독자가 메소드를 갖고 있어.
+  - 따라서 행동주체인 생성자가, 이 행위를 알아내고 싶어하는 구독자.onNext()를 호출
+- onComplete는 데이터를 마무리한단 행위야. 행위의 주체는 생산자인데, 이 행위를 알고 싶어하는 앤 구독자야.
+  - 생성자 publisher가 이 행위를 알고 싶어하는 구독자.onComplete()를 호출
+
 
 ![img](https://engineering.linecorp.com/wp-content/uploads/2020/02/reactivestreams1-9.png)
 
