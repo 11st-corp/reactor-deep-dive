@@ -86,14 +86,32 @@
 
 ## c4_LifecycleHooks
 
-- `doOnSubscribe()`
-- `doFirst()`
-- `doOnNext()`
-- `doOnComplete()`
-- `doOnCancel()`
-- `doOnTerminate()`
-- `doFinally()`
-- `doOnEach()`
+- `doOnSubscribe(Consumer<? super Subscription> onSubscribe)`
+  - ![doOnSubscribe](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/doOnSubscribe.svg)
+  - Publisher에서 Subscription이 생성되어 Subscriber.onSubscribe로 전달될 때의 behavior를 정의한다. 
+- `doFirst(Runnable onFirst)`
+  - ![doFirst](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/doFirstForFlux.svg)
+  - 구독되기 전 실행될 behavior를 정의한다.
+  - chaining을 통해 여러 번 사용할 수 있지만, 그 순서는 역방향이다. (구독 신호가 Subscriber에서 Publisher로 흐르기 때문이다.)
+- `doOnNext(Consumer<? super T> onNext)`
+  - ![doOnNext](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/doOnNextForFlux.svg)
+  - item이 emit될 때의 behavior를 정의한다.
+- `doOnComplete(Runnable onComplete)`
+  - ![doOnComplete](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/doOnComplete.svg)
+  - 구독이 Complete했을 때의 Behavior를 정의한다.
+- `doOnCancel(Runnable onCancel)`
+  - ![doOnCancel](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/doOnCancelForFlux.svg)
+  - 구독이 cancel되었을 때의 behavior를 정의한다.
+- `doOnTerminate(Runnable onTerminate)`
+  - ![doOnTerminate Successful](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/doOnTerminateForFlux.svg)
+  - ![doOnTerminate Failed](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/doOnTerminateForFlux.svg)
+  - 구독이 complete되었거나 혹은 실패(에러 발생)했을 때의 behavior를 정의한다.
+- `doFinally(Consumer<SignalType> onFinally)`
+  - ![doFinally](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/doFinallyForFlux.svg)
+  - 구독이 (cancel을 포함하여) 종료되었을 때의 behavior를 정의한다.
+- `doOnEach(Consumer<? super Signal<T>> signalConsumer)`
+  - ![doOnEach](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/doOnEachForFlux.svg)
+  - 개별 아이템이 emit될 때 성공하거나 실패하는 등 어떠한 경우에나 발생되는 behavior를 정의한다.
 
 ## c5_CreatingSequence
 
