@@ -30,12 +30,28 @@
 
 ## c2_TransformingSequence
 
-- `.map()`
-- `.cast()`
-- `.defaultIfEmpty()`
-- `.reduce()`
-- `.scan()`
-- `.startWith()`
+- `.map(Function<? super T, ? extends R> mapper)`
+  - ![map](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/mapForFlux.svg)
+  - Synchronous Function인 mapper에 따라 각 item에 대한 transform을 진행한다.
+- `.cast(Class<E> clazz)
+  - ![cast](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/castForMono.svg)
+  - Sequence에서 emit되는 각 item에 대해서 지정한 클래스 타입으로 변환한다.
+- `.defaultIfEmpty(T defaultV)`
+  - ![defaultIfEmpty](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/defaultIfEmpty.svg)
+  - Sequence에서 아무런 데이터 emit 없이 complete되는 경우 지정한 Default 데이터를 반환한다.
+- `Flux.reduce(A initial, BiFunction<A, ? super T, A) accumulator, Flux.reduce(BiFunction<T, T, T> aggregator)`
+  - ![Flux.reduce(initial, accumulator)](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/reduce.svg)
+  - ![Flux.reduce(aggregator)](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/reduceWithSameReturnType.svg)
+  - Flux sequence에서 emit되는 값을 단일 값으로 reduce 시킨다. initial parameter가 포함되는 경우 해당 값을 기준으로 하는 reduction이 반영된다.
+- `Flux.scan(A initial, BiFunction<A, ? super T, A> accumulator), Flux.scan(BiFunction<T, T, T> accumulator)`
+  - ![Flux.scan(initial, accumulator)](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/scan.svg)
+  - ![Flux.scan(accumulator)](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/scanWithSameReturnType.svg)
+  - Sequence에서 emit되는 값은 accumulator에 의해서 계산된 중간 결과들로 변환된다. initial 값이 파라미터로 들어가지 않는 경우 Sequence의 첫번째 아이템이 initial로 간주된다.
+- `Flux.startWith(Iterable<? extends T> iterable), Flux.startWith(Publisher<? extends T> publisher), Flux.startWith(T ... values)`
+  - ![Flux.startWith(iterable)](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/startWithIterable.svg)
+  - ![Flux.startWith(publisher)](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/startWithPublisher.svg)
+  - ![Flux.startWith(values)](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/startWithValues.svg)
+  - 파라미터에 들어가는 값 Sequence를 현재 Sequence에서 가지고 있는 값 앞에 Prepend한다.
 
 ## c3_FilteringSequence
 
