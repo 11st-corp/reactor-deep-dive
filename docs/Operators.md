@@ -115,19 +115,67 @@
 
 ## c5_CreatingSequence
 
-- `Mono.just()`
-- `Mono.justOrEmpty()`
-- `Mono.fromCallable()`
-- `Mono.fromFuture()`
-- `Mono.fromRunnable()`
+- `Mono.just(T data)`
+  - ![just](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/just.svg)
+  - 구독 시 해당 값을 emit한다.
+  - Hot Publisher
+- `Mono.justOrEmpty(T data) / Mono.justOrEmpty(Optional<? extends T> data)`
+  - ![justOrEmpty](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/justOrEmpty.svg)
+  - 구독 시 해당 값을 emit한다.
+  - null 값이 있을 경우 onComplete만 emit된다.
+- `Mono.fromCallable(Callable<? extends T> supplier)`
+  - ![fromCallable](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/fromCallable.svg)
+    - Callable로부터 값을 생성하는 Mono를 생성한다.
+- `Mono.fromFuture(Supplier<? extends CompletableFuture<? extends T>> futureSupplier) / Mono.fromFuture(Supplier<? extends CompletableFuture<? extends T>> futureSupplier, boolean suppressCancel)`
+  - ![fromFuture(futureSupplier)](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/fromFutureSupplier.svg)
+  - ![fromFuture(futureSupplier, suppressCancel)](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/fromFutureSupplier.svg)
+  - CompletableFuture로부터 값을 생성하는 Mono를 생성하고, suppressCancel == false인 경우 Mono가 취소되었을 경우 CompletableFuture 또한 취소된다.
+- `Mono.fromRunnable(Runnable runnable)`
+  - ![fromRunnable](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/fromRunnable.svg)
+  - Runnable로부터 값을 생성하는 Mono를 생성한다.
 - `Mono.empty()`
-- `Mono.error()`
-- `Flux.fromArray()`
-- `Flux.fromIterable()`
-- `Flux.fromStream()`
-- `Flux.interval()`
-- `Flux.range()`
+  - ![empty](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/empty.svg)
+  - item을 emit하지 않고 complete되는 Mono를 생성한다.
+- `Mono.error(Throwable error) / Mono.error(Supplier<? extends Throwable> errorSupplier)`
+  - ![error(error)](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/error.svg)
+  - ![error(errorSupplier)](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/errorWithSupplier.svg)
+  - 구독 직후 error를 일으키는 Mono를 생성한다.
+- `Flux.fromArray(T[] array)`
+  - ![fromArray](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/fromArray.svg)
+  - 제공된 배열의 item들을 emit하는 Flux를 생성한다.
+- `Flux.fromIterable(Iterable<? extends T> it)`
+  - ![fromIterable](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/fromIterable.svg)
+  - Iterable의 items를 emit하는 Flux를 생성한다.
+- `Flux.fromStream(Stream<? extends T> s) / Flux.fromStream(Supplier<Stream<? extends T>> streamSupplier)`
+  - ![fromStream](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/fromStream.svg)
+  - Stream의 items를 emit하는 Flux를 생성한다.
+- `Flux.interval(Duration period) / Flux.interval(Duration delay, Duration period) / Flux.interval(Duration delay, Duration period, Scheduler timer) / Flux.interval(Duration period, Scheduler timer)`
+  - ![interval](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/docㅈ-files/marbles/interval.svg)
+  - ![interval](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/intervalWithDelay.svg)
+  - 0에서 시작하여 period interval만큼 증가하면서 long value를 emit하는 Flux를 생성한다. (0, 1, 2, ...)
+  - delay가 주어지는 경우 initial delay가 흐른 후 emit을 시작한다.
+- `Flux.range(int start, int count)`
+  - ![range](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/range.svg)
+  - start ~ start + count - 1 까지의 값을 순차적으로 emit하는 Flux를 생성한다.
 - `Mono.repeat()`
-- `Flux.generate()`
-- `Flux.create()`
-- `Flux.push()`
+  - ![repeat](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/repeatForMono.svg)
+  - 이전 구독이 완료되면 계속해서 무한하게 source를 구독한다.
+- `Flux.generate(Callable<S> stateSupplier, BiFunction<S,SynchronousSink<T>,S> generator) / Flux.generate(Callable<S> stateSupplier, BiFunction<S,SynchronousSink<T>,S> generator, Consumer<? super S> stateConsumer) / Flux.generate(Consumer<SynchronousSink<T>> generator)`
+  - ![generate](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/generate.svg)
+  - ![generateWithCleanup](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/generateWithCleanup.svg)
+  - Low-level 메서드로 Flux sequence의 state와 backpressure를 직접 Handling할 수 있다.
+  - stateSupplier는 generator function의 Initial state object를 제공한다.
+  - generator function은 currentState와 SynchronousSink API를 input으로 하는 BiFunction으로 sequence의 next element를 생성한다. SynchronousSink API를 통해 element를 emit하거나 complete, error를 발생시킬 수 있다.
+  - stateConsumer는 generator function이 호출된 후의 state object를 수정하는 것과 관련된다. cleanup 구현이 주로 이루어진다.
+- `Flux.create(Consumer<? super FluxSink<T>> emitter) / Flux.create(Consumer<? super FluxSink<T>> emitter, FluxSink.OverflowStrategy backpressure)`
+  - ![create](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/createForFlux.svg)
+  - ![createWithOverflowStrategy](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/createWithOverflowStrategy.svg)
+  - FluxSink API를 통해서 동기/비동기식으로 여러 elements를 emit하는 기능을 가지는 Flux를 programmatically하게 구현한다.
+  - backpressure strategy를 직접 설정할 수 있다.
+- `Flux.push(Consumer<? super FluxSink<T>> emitter) / Flux.push(Consumer<? super FluxSink<T>> emitter, FluxSink.OverflowStrategy backpressure)`
+  - ![push](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/push.svg)
+  - ![pushWithOverflowStrategy](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/pushWithOverflowStrategy.svg)
+  - FluxSink API를 통해 동기/비동기식으로 여러 elements를 emit하는 기능을 가지는 Flux를 programmatically하게 구현한다.
+  - backpressure strategy를 직접 설정할 수 있다.
+
+  > Flux.create() 와 Flux.push() 두 메서는 모두 FluxSink API를 사용해 동일한 기능을 구현하지만, create 메서드의 경우 멀티스레드에서 item을 생성할 수 있다는 점에서, push 메서드의 경우 그렇지 못하다는 점에서 차이가 있다.
