@@ -55,12 +55,34 @@
 
 ## c3_FilteringSequence
 
-- `.filter()`
-- `.ofType()`
-- `.distinct()`
+- `.filter(Predicate<? super T> p)`
+  - ![filter](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/filterForFlux.svg)
+  - 주어진 predicate에 대해서 source의 개별 아이템을 판단하여 필터링한다. 
+- `.ofType(Class<U> clazz)`
+  - ![ofType](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/ofTypeForFlux.svg)
+  - 주어진 Class Type에 대해서 source의 개별 아이템을 판단하여 필터링한다.
+- `.distinct() / .distinct(Function<? super T, ? extends V> keySelector) / .distinct(Function<? super T, ? extends V> keySelector, Supplier<C> distinctCollectionSupplier)`
+  - ![distinct](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/distinct.svg)
+  - ![distinct(keySelector)](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/distinctWithKey.svg)
+  - ![distinct(keySelector, distinctCollectionSupplier)](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/distinctWithKey.svg)
+  - sequence의 각 아이템에 대하여 unique하지 않은 item들은 제거하여 개별 item이 uniqueness를 유지할 수 있도록 한다.
+  - keySelector Function이 파라미터로 제공되는 경우 각 아이템에 해당 Function이 적용된 결과를 기준으로 필터링한다.
+  - distinctCollectionSupplier가 파라미터로 제공되는 경우 Sequence의 모든 아이템은 supplier function의 새로운 인스턴스에 추가되고 해당 컬렉션을 기반으로 distinct를 계산한다.
 - `.next()`
-- `.take()`
-- `.takeLast()`
+  - ![next](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/next.svg)
+  - Sequence에서 첫번째 Item을 emit한다.
+- `.take(Duration timeSpan) / .take(Duration timeSpan, Scheduler timer) / .take(long n) / .take(long n, boolean limitRequest)`
+  - ![take(timeSpan)](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/takeWithTimespanForFlux.svg)
+  - ![take(timeSpan, timer)](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/takeWithTimespanForFlux.svg)
+  - ![take(n)](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/takeLimitRequestTrue.svg)
+  - Sequence의 앞에서부터 N개만큼의 값을 emit된다.
+  - n = 0일 경우 Source가 구독되지 않으며 operator가 구독 즉시 완료된다.
+  - `.take(n)`의 경우 두 번째 파라미터 `limitRequest = true`가 생략된 케이스이다.
+  - limitRequest = false로 설정되는 경우 unbounded request가 되므로 publisher와 subscriber의 속도 차이가 발생할 때 이슈가 발생할 수 있다. (Complete signal이 발생한 후에도 값이 계속해서 emit된다.)
+  - timespan을 지정하는 경우 해당 시간 동안만 sequence 값 출력을 relay한다.
+- `.takeLast(int n)`
+  - ![takeLast](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/takeLast.svg)
+  - Completion 직전의 N개 값을 emit한다.
 
 ## c4_LifecycleHooks
 
