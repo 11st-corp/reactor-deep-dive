@@ -26,6 +26,7 @@
   - ![subscribe (consumer, errorConsumer, completeConsumer, subscriptionConsumer)](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/subscribeForMono.svg)
 
   > subscribe 메서드의 return type은 [Disposable](https://github.com/reactor/reactor-core/blob/main/reactor-core/src/main/java/reactor/core/Disposable.java) 이다. 해당 인터페이스는 `dispose()` 메서드 호출로 구독을 취소할 수 있는데 (Source가 elements 생성을 중단), 즉시 중지가 보장되지 않는다. - 몇몇 Source는 elements 생성이 너무 빨라 dispose 전에 완료될 수 있다.
+  > subscribe 메서드는 (Both Mono and Flux) Unbounded Request Strategy를 사용한다. 즉, Backpressure가 Default로 사용되지 않는다.
 
 ## c2_TransformingSequence
 
