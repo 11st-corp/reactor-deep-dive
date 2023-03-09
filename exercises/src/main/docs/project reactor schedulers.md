@@ -184,33 +184,92 @@ while(true) {
 }
 ```
 
-따라서 `ExecutorScheduler`는 `Executor`를 사용해 작업을 처리하고, `Executor`는 쓰레드 풀을 제공한다.
+따라서 `ExecutorScheduler`는 `Executor`를 사용해 작업을 처리하고 쓰레드 풀을 생성한다.
 
 `Executor`의 종류에 관계없기 때문에 기존에 존재하던 것을 래핑해 재사용할 수 있다.
 
 <br>
 
+---
 
+## Blocking vs Non-Blocking
 
+기본적으로 `Reactive Streams`는 `Blocking API`를 지원하지 않기 때문에 스케쥴러는 `Non-Blockiong` 기반으로 동작한다.
 
+**🤔만약 Blocking 코드가 필요하다면요?**
 
+`Schedulers.fromExecutorService()` 메서드를 사용해 커스텀한 `ExecutorService`를 만들어 사용하거나, `Schedulers.newBoundedElastic()`를 통해 
+별도의 새로운 `BoundedElasticScheduler`를 만들어 커스텀한 `ExecutorService`에 연결행 `Blocking`처리를 할 수 있다.
 
+하지만 `Reative Streams`의 원칙에 어긋나기 때문에 지양하는 것이 좋다.
 
+<br>
 
+---
 
+<br>
 
+### ⚡️ Scheduler 전용 Operator
 
+### publishOn()
 
+`publishOn()` 메서드는 `Project Reactor`에서 제공하는 `Operator`로, 스트림에서 이후의 동작을 특정 `Scheduler` 상에서 실행할 수 있게 해준다.
 
+이를 코드로 살펴보면,
 
+```java
+Flux.just(1, 2, 3) // main
+    .publishOn(Schedulers.elastic()) // Thread-0
+    .map(i -> i * 2) // Thread-0
+    .subscribe(System.out::println); // main
 
+```
 
+1. 먼저 `Flux.just(1, 2, 3)`을 통해 메인 스레드에서 데이터 스트림을 생성한다.
+2. `publishOn`을 통해 이후 동작을 `ElasticScheduler`에서 실행되도록 한다.
+3. `map`은 `publishOn`으로 지정된 `Scheduler`를 통해 별도의 스레드에서 수행된다.
+4. 다시 메인 스레드가 `subscribe`를 통해 구독하였기 떄문에 출력문은 메인 스레드에서 수행된다.
 
+결론적으로 스트림에서 오랜 시간이 결리는 연산을 다른 스레드에서 처리할 수 있게되고 메인 스레드는 `Non-Blocking` 상태가 된다.
 
+<br>
 
+## subscribeOn()
 
+`subscribeOn()`은 `Publisher`에서 정의된 메서드로써, 스트림의 어느 부분에서 구독을 시작할지를 지정하는 메서드이다.
 
+즉, 구독하는 스레드를 지정할 수 있다.
 
+- 호출된 순간부터 모든 함수에 적용
+- `subscribeOn()` 이후에 호출된 모든 함수는 지정된 `Scheduler`에서 실행
+- 단일 스레드, 멀티 스레드 모두에서 사용 가능
+- 메서드 체이닝을 통해 여러번 호출될 수 있지만 마지막에 호출된 `Scheduler`에서 작업이 수행
+  - 여러번 호출된다면 이전에 호출된 `subscribeOn`은 무시됨
 
+<br>
 
+코드로 살펴보자.
 
+```java
+Flux.range(1, 10)
+    .map(i -> i * 2)
+    .subscribeOn(Schedulers.elastic())
+    .subscribe(System.out::println);
+
+```
+
+- `Flux.range`를 통해 데이터 스트림이 메인 스레드에서 생성
+- `subscribeOn()`을 통해 별도의 `Scheduler` 지정
+- `map` 연산과 출력문 모두 지정된 별도의 `Scheduler`에서 수행
+
+<br>
+
+```java
+Flux.range(1, 10)
+    .subscribeOn(Schedulers.single())
+    .map(i -> i * 2)
+    .subscribeOn(Schedulers.elastic())
+    .subscribe(System.out::println);
+```
+
+위와 같이 `subscribeOn`은 여러번 호출되더라도 제일 마지막에 호출된 스케줄러에서 수행되기 때문에 `map`과 출력문 모두 `Schedulers.elastic()`에서 수행된다.
