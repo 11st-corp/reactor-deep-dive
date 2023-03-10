@@ -89,11 +89,11 @@ public class c6_CombiningPublishers extends CombiningPublishersBase {
      * First `numberService1` emits elements and then `numberService2`. (no interleaving)
      * <p>
      * Bonus: There are two ways to do this, check out both! - 하나는 뭘까? 그냥 mergeWith?
-     * Q? concatWith? vs merge?
+     * Q? merge로 했는데 왜 통과하누?
      */
     @Test
     public void i_am_rubber_you_are_glue() {
-        Flux<Integer> numbers = Flux.merge(numberService1(), numberService2());
+        Flux<Integer> numbers = Flux.concat(numberService1(), numberService2());
 
         //don't change below this line
         StepVerifier.create(numbers)
@@ -195,7 +195,7 @@ public class c6_CombiningPublishers extends CombiningPublishersBase {
      * <p>
      * Call `autoComplete()` function for each user input
      * but if newer input arrives, cancel previous `autoComplete()` call and call it for latest input.
-     * 흑흑 한참 찾음...
+     * 흑흑 한참 찾음...근데 마지막 publisher가 Mono아닌가? ㅠ
      */
     @Test
     public void instant_search() {
