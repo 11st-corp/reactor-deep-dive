@@ -179,3 +179,72 @@
   - backpressure strategy를 직접 설정할 수 있다.
 
   > Flux.create() 와 Flux.push() 두 메서는 모두 FluxSink API를 사용해 동일한 기능을 구현하지만, create 메서드의 경우 멀티스레드에서 item을 생성할 수 있다는 점에서, push 메서드의 경우 그렇지 못하다는 점에서 차이가 있다.
+ 
+## c6_CombiningPublishers
+
+- `Mono.flatMap(Function<? super T,? extends Mono<? extends R>> transformer)`
+  ![Mono.flatMap](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/flatMapForMono.svg)
+  - Input Mono를 새로운 Mono로 mapping한다.
+- `Flux.flatMap(Function<? super T,? extends Publisher<? extends R>> mapper) / Flux.flatMap(Function<? super T,? extends Publisher<? extends R>> mapperOnNext, Function<? super Throwable,? extends Publisher<? extends R>> mapperOnError, Supplier<? extends Publisher<? extends R>> mapperOnComplete), Flux.flatMap(Function<? super T,? extends Publisher<? extends V>> mapper, int concurrency) / Flux.flatMap(Function<? super T,? extends Publisher<? extends V>> mapper, int concurrency, int prefetch)`
+  - ![Flux.flatMap](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/flatMapForFlux.svg)
+  - ![Flux.flatMap with Concurrency](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/flatMapWithConcurrency.svg)
+  - ![Flux.flatMap with Concurrency, Prefetch](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/flatMapWithConcurrencyAndPrefetch.svg)
+  - Flux에서 emit하는 item들을 새로운 단일 Publisher로 flatten하고 각 element에 대해 Mapper function을 적용해 변환한다.
+  - 변환되어 방출되는 순서는 보장되지 않는다.
+
+> ### Stream API에서의 map / flatMap 메서드와 Project Reactor에서의 map / flatMap 메서드
+> 각각에서의 두 메서드는 모두 동일하게 데이터 스트림을 변환하는데 사용된다. 다만 몇 가지 다른 점에 대해서 확인해야 할 것이 있다.
+> 1. map 메서드는 Single Input / Output (1:1), flatMap 메서드는 Single Input / Multiple (0 ~ N) Output (1:N)
+> 2. Flatten Behavior - Stream API와 Project Reactor 모두에서 출력 결과가 단일 스트림으로 Flatten된다. Java Stream API에서는 새 Stream을 생성하고 모든 결과 Stream을 단일 Stream으로 병합하는 반면 Project Reactor에서는 Operator에 내장되어 있다.
+
+- `Mono.flatMapMany(Function<? super T,? extends Publisher<? extends R>> mapper) / Mono.flatMapMany(Function<? super T,? extends Publisher<? extends R>> mapperOnNext, Function<? super Throwable,? extends Publisher<? extends R>> mapperOnError, Supplier<? extends Publisher<? extends R>> mapperOnComplete)`
+  - ![Mono.flatMapMany](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/flatMapMany.svg)
+  - ![Mono.flatMapMany with mappersOnTerminalEvents](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/flatMapManyWithMappersOnTerminalEvents.svg)
+  - `Mono.flatMap` 변형으로 mapping 결과가 Mono가 아닌 Flux로 변환된다. (이 때 mapping function에 의해 반환되는 모든 Publisher 인스턴스의 emission이 flatten된다.)
+- `Flux.concat(Iterable<? extends Publisher<? extends T>> sources) / Flux.concat(Publisher<? extends Publisher<? extends T>> sources) / Flux.concat(Publisher<? extends Publisher<? extends T>> sources, int prefetch) / Flux.concat(Publisher<? extends T>... sources)`
+  - ![Flux.concat](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/concatVarSources.svg)
+  - 하나 이상의 Publisher 인스턴스에서 발생되는 emission을 concatenate하여 단일 Flux로 변환한다. parameter로 정의한 각 Publisher의 순서가 보장된다.
+- `Flux.concatMap(Function<? super T,? extends Publisher<? extends V>> mapper) / Flux.concatMap(Function<? super T,? extends Publisher<? extends V>> mapper, int prefetch)`
+  - ![Flux.concatMap](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/concatMap.svg)
+  - `flatMap`과 동일하나 순서가 보장된다.
+- `Flux.firstWithValue(Iterable<? extends Publisher<? extends I>> sources) / Flux.firstWithValue(Publisher<? extends I> first, Publisher<? extends I>... others)`
+  - ![firstWithValue](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/firstWithValueForFlux.svg)
+  - Sequence에서 emit될 item이 없는 경우 default 값을 지정한다.
+- `Flux.switchIfEmpty(Publisher<? extends T> alternate)`
+  - ![switchIfEmpty](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/switchIfEmptyForFlux.svg)
+  - source가 empty인 경우 switchIfEmpty operator 내에 정의한 backup publisher가 source를 대체하도록 한다.
+- `Flux.switchOnFirst(BiFunction<Signal<? extends T>,Flux<T>,Publisher<? extends V>> transformer) / Flux.switchOnFirst(BiFunction<Signal<? extends T>,Flux<T>,Publisher<? extends V>> transformer, boolean cancelSourceOnComplete)`
+  - ![switchOnFirst](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/switchOnFirst.svg)
+  - source Flux의 첫 요소가 emit될 때 다른 Flux로 전환되도록 한다.
+  - source Flux의 첫 요소에 따라 Flux 동작을 동적으로 변경해야 할 때 유용하다.
+- `Flux.switchMap(Function<? super T,Publisher<? extends V>> fn) / Flux.switchMap(Function<? super T,Publisher<? extends V>> fn, int prefetch)`
+  - ![switchMap](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/switchMap.svg)
+  - Flux의 elements를 새로운 Publisher를 반환하는 함수를 적용하여 변환하는 operator이다.
+- `Flux.then(Mono<V> other)`
+  - ![Flux.then](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/thenWithMonoForFlux.svg)
+  - Flux Publisher의 항목은 버리고, 해당 Publisher가 complete되었을 때의 Mono로 wrapping된 값이 반환된다. 
+- `Mono.thenReturn(V value)`
+  - ![Mono.thenReturn](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/thenReturn.svg)
+  - Publisher가 complete된 후 상수 결과가 반환된다.
+- `Flux.thenMany(Publisher<V> other)`
+  - ![Flux.thenMany](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/thenManyForFlux.svg)
+  - 두 개의 Stream을 concatenate하지만, 두번째 Stream의 항목들만 반환된다.
+- `Flux.merge(int prefetch, Publisher<? extends I>... sources) / Flux.merge(Iterable<? extends Publisher<? extends I>> sources) / Flux.merge(Publisher<? extends I>... sources) / Flux.merge(Publisher<? extends Publisher<? extends T>> source) / Flux.merge(Publisher<? extends Publisher<? extends T>> source, int concurrency) / Flux.merge(Publisher<? extends Publisher<? extends T>> source, int concurrency, int prefetch)`
+  - ![Flux.merge](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/mergeFixedSources.svg)
+  - 여러 Stream을 단일 Stream으로 결합한다. emit 되는 순서는 보장되지 않는다. 순서 보장 구현을 위해서 `concat` 혹은 `flatMap` operator 추가 구현이 필요하다.
+- `Flux.zipWith(Publisher<? extends T2> source2) / Flux.zipWith(Publisher<? extends T2> source2, BiFunction<? super T,? super T2,? extends V> combinator) / Flux.zipWith(Publisher<? extends T2> source2, int prefetch) / Flux.zipWith(Publisher<? extends T2> source2, int prefetch, BiFunction<? super T,? super T2,? extends V> combinator)`
+  - ![Flux.zipWith](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/zipWithOtherForFlux.svg)
+  - ![Flux.zipWithUsingZipper](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/zipWithOtherUsingZipperForFlux.svg)
+  - 서로 다른 Stream에서 emit되는 아이템을 combine해 하나의 Stream으로 변환하고 이 때 특정 function이 적용되어 corresponding position의 아이템을 특정 값으로 변환한다.
+- `Mono.defer(Supplier<? extends Mono<? extends T>> supplier)`
+  - ![Mono.defer](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/deferForMono.svg)
+  - Hot -> Cold Publisher로 전환한다.
+  - Subscription이 될 때까지 인스턴스화되지 않아 반환 값을 캡처하지 않는다. 
+- `Flux.usingWhen(Publisher<D> resourceSupplier, Function<? super D,? extends Publisher<? extends T>> resourceClosure, Function<? super D,? extends Publisher<?>> asyncCleanup) / Flux.usingWhen(Publisher<D> resourceSupplier, Function<? super D,? extends Publisher<? extends T>> resourceClosure, Function<? super D,? extends Publisher<?>> asyncComplete, BiFunction<? super D,? super Throwable,? extends Publisher<?>> asyncError, Function<? super D,? extends Publisher<?>> asyncCancel)`
+  - ![Flux.usingWhen](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/usingWhenSuccessForFlux.svg)
+  - ![Flux.usingWhen Failure](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/usingWhenFailureForFlux.svg)
+  - ![Flux.usingWhen Cleanup Error](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/usingWhenCleanupErrorForFlux.svg)
+  - ![Flux.usingWhen Early Cancel](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/doc-files/marbles/usingWhenEarlyCancelForFlux.svg)
+  - 데이터 스트림을 처리하는데 필요한 리소스의 lifecycle을 관리하는데 사용하는 operator이다. (`using` / `usingWhen`)
+  - `usingWhen`은 `using`의 advanced operator로써 성공 / 실패에 대한 조치를 구현할 수 있다.
+  - [참고](https://kouzie.github.io/java/java-%EB%A6%AC%EC%95%A1%ED%84%B0/#generate-using-usingwhen)
