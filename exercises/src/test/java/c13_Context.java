@@ -1,6 +1,7 @@
 import org.junit.jupiter.api.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.SignalType;
 import reactor.test.StepVerifier;
 import reactor.util.context.Context;
 
@@ -26,70 +27,82 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class c13_Context extends ContextBase {
 
-    /**
-     * You are writing a message handler that is executed by a framework (client). Framework attaches a http correlation
-     * id to the Reactor context. Your task is to extract the correlation id and attach it to the message object.
-     */
-    public Mono<Message> messageHandler(String payload) {
-        //todo: do your changes withing this method
-        return Mono.just(new Message("set correlation_id from context here", payload));
-    }
+	/**
+	 * You are writing a message handler that is executed by a framework (client). Framework attaches a http correlation
+	 * id to the Reactor context. Your task is to extract the correlation id and attach it to the message object.
+	 */
+	public Mono<Message> messageHandler(String payload) {
+		//todo: do your changes withing this method
+		return Mono.deferContextual(context -> Mono.just(new Message(context.get(HTTP_CORRELATION_ID), payload)));
+	}
 
-    @Test
-    public void message_tracker() {
-        //don't change this code
-        Mono<Message> mono = messageHandler("Hello World!")
-                .contextWrite(Context.of(HTTP_CORRELATION_ID, "2-j3r9afaf92j-afkaf"));
+	@Test
+	public void message_tracker() {
+		//don't change this code
+		Mono<Message> mono = messageHandler("Hello World!")
+				.contextWrite(Context.of(HTTP_CORRELATION_ID, "2-j3r9afaf92j-afkaf"));
 
-        StepVerifier.create(mono)
-                    .expectNextMatches(m -> m.correlationId.equals("2-j3r9afaf92j-afkaf") && m.payload.equals(
-                            "Hello World!"))
-                    .verifyComplete();
-    }
+		StepVerifier.create(mono)
+				.expectNextMatches(m -> m.correlationId.equals("2-j3r9afaf92j-afkaf") && m.payload.equals(
+						"Hello World!"))
+				.verifyComplete();
+	}
 
-    /**
-     * Following code counts how many times connection has been established. But there is a bug in the code. Fix it.
-     */
-    @Test
-    public void execution_counter() {
-        Mono<Void> repeat = Mono.deferContextual(ctx -> {
-            ctx.get(AtomicInteger.class).incrementAndGet();
-            return openConnection();
-        });
-        //todo: change this line only
-        ;
+	/**
+	 * Following code counts how many times connection has been established. But there is a bug in the code. Fix it.
+	 */
+	@Test
+	public void execution_counter() {
+		Mono<Void> repeat = Mono.deferContextual(ctx -> {
+					ctx.get(AtomicInteger.class).incrementAndGet();
+					return openConnection();
+				})
+				.contextWrite(Context.of(AtomicInteger.class, new AtomicInteger(0)));
 
-        StepVerifier.create(repeat.repeat(4))
-                    .thenAwait(Duration.ofSeconds(10))
-                    .expectAccessibleContext()
-                    .assertThat(ctx -> {
-                        assert ctx.get(AtomicInteger.class).get() == 5;
-                    }).then()
-                    .expectComplete().verify();
-    }
+		StepVerifier.create(repeat.repeat(4))
+				.thenAwait(Duration.ofSeconds(10))
+				.expectAccessibleContext()
+				.assertThat(ctx -> {
+					assert ctx.get(AtomicInteger.class).get() == 5;
+				}).then()
+				.expectComplete().verify();
+	}
 
-    /**
-     * You need to retrieve 10 result pages from the database.
-     * Using the context and repeat operator, keep track of which page you are on.
-     * If the error occurs during a page retrieval, log the error message containing page number that has an
-     * error and skip the page. Fetch first 10 pages.
-     */
-    @Test
-    public void pagination() {
-        AtomicInteger pageWithError = new AtomicInteger(); //todo: set this field when error occurs
+	/**
+	 * You need to retrieve 10 result pages from the database.
+	 * Using the context and repeat operator, keep track of which page you are on.
+	 * If the error occurs during a page retrieval, log the error message containing page number that has an
+	 * error and skip the page. Fetch first 10 pages.
+	 */
+	@Test
+	public void pagination() {
+		AtomicInteger pageWithError = new AtomicInteger(); //todo: set this field when error occurs
 
-        //todo: start from here
-        Flux<Integer> results = getPage(0)
-                .flatMapMany(Page::getResult)
-                .repeat(10)
-                .doOnNext(i -> System.out.println("Received: " + i));
+		//todo: start from here
+		Flux<Integer> results = Mono.deferContextual(ctx -> getPage(ctx.get(AtomicInteger.class).get()))
+                                    .doOnEach(signal -> {
+                                        if (signal.getType() == SignalType.ON_NEXT) {
+                                            signal.getContextView().get(AtomicInteger.class).incrementAndGet();
+                                        }
+                                        else if (signal.getType() == SignalType.ON_ERROR) {
+                                            pageWithError.set(signal.getContextView().get(AtomicInteger.class).get());
+                                            System.out.println(signal.getThrowable().getMessage());
+                                            System.out.println(signal.getContextView().get(AtomicInteger.class)
+                                                    .getAndIncrement() + "페이지에서 에러 발생");
+                                        }
+                                    })
+                                    .onErrorResume(e -> Mono.empty())
+                                    .flatMapMany(Page::getResult)
+                                    .repeat(10)
+                                    .doOnNext(i -> System.out.println("Received: " + i))
+                                    .contextWrite(Context.of(AtomicInteger.class, new AtomicInteger(0)));
 
 
-        //don't change this code
-        StepVerifier.create(results)
-                    .expectNextCount(90)
-                    .verifyComplete();
+		//don't change this code
+		StepVerifier.create(results)
+				.expectNextCount(90)
+				.verifyComplete();
 
-        Assertions.assertEquals(3, pageWithError.get());
-    }
+		Assertions.assertEquals(3, pageWithError.get());
+	}
 }
