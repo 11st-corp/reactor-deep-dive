@@ -64,7 +64,7 @@ StepVerifier.withVirtualTime(() -> Mono.delay(Duration.ofDays(1)))
     .verifyComplete(); // verify()를 사용하면 Duration이 반환되어 테스트 동안 실제 걸린 시간이 포함된다.
 ```
 
-> Virtual Time은 infinite sequence를 사용하면 메우 제한적이라, 시퀀스와 검증을 실행할 스레드를 모두 독차지할 수 있다.
+> Virtual Time은 infinite sequence를 사용하면 매우 제한적이라, 시퀀스와 검증을 실행할 스레드를 모두 독차지할 수 있다.
 
 
 ### Performing Post-execution Assertions with `StepVerifier`
