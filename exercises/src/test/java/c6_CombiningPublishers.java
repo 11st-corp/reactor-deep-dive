@@ -40,9 +40,9 @@ public class c6_CombiningPublishers extends CombiningPublishersBase {
         Hooks.enableContextLossTracking(); //used for testing - detects if you are cheating!
 
         //todo: feel free to change code as you need
-        Mono<String> currentUserEmail = null;
+        //https://luvstudy.tistory.com/95
+        Mono<String> currentUserEmail = getCurrentUser().flatMap(this::getUserEmail);
         Mono<String> currentUserMono = getCurrentUser();
-        getUserEmail(null);
 
         //don't change below this line
         StepVerifier.create(currentUserEmail)
@@ -60,8 +60,8 @@ public class c6_CombiningPublishers extends CombiningPublishersBase {
     @Test
     public void task_executor() {
         //todo: feel free to change code as you need
-        Flux<Void> tasks = null;
-        taskExecutor();
+        Flux<Void> tasks = taskExecutor().flatMap(t -> t);
+        Flux<Mono<Void>> taskExecutor = taskExecutor();
 
         //don't change below this line
         StepVerifier.create(tasks)
@@ -79,8 +79,8 @@ public class c6_CombiningPublishers extends CombiningPublishersBase {
     @Test
     public void streaming_service() {
         //todo: feel free to change code as you need
-        Flux<Message> messageFlux = null;
-        streamingService();
+        Flux<Message> messageFlux = streamingService().flatMapMany(message -> message);
+        Mono<Flux<CombiningPublishersBase.Message>> streamingService = streamingService();
 
         //don't change below this line
         StepVerifier.create(messageFlux)
@@ -94,11 +94,17 @@ public class c6_CombiningPublishers extends CombiningPublishersBase {
      * First `numberService1` emits elements and then `numberService2`. (no interleaving)
      *
      * Bonus: There are two ways to do this, check out both!
+     *
+     * https://www.baeldung.com/reactor-combine-streams
+     *
+     * concat x
+     * concatWith o
+     * merge x, mergeWith o
      */
     @Test
     public void i_am_rubber_you_are_glue() {
         //todo: feel free to change code as you need
-        Flux<Integer> numbers = null;
+        Flux<Integer> numbers = numberService1().mergeWith(numberService2());
         numberService1();
         numberService2();
 
@@ -124,7 +130,7 @@ public class c6_CombiningPublishers extends CombiningPublishersBase {
     @Test
     public void task_executor_again() {
         //todo: feel free to change code as you need
-        Flux<Void> tasks = null;
+        Flux<Void> tasks = taskExecutor().concatMap(t -> t);
         taskExecutor();
 
         //don't change below this line
@@ -142,7 +148,7 @@ public class c6_CombiningPublishers extends CombiningPublishersBase {
     @Test
     public void need_for_speed() {
         //todo: feel free to change code as you need
-        Flux<String> stonks = null;
+        Flux<String> stonks = Flux.firstWithSignal(getStocksGrpc(), getStocksRest());
         getStocksGrpc();
         getStocksRest();
 
@@ -153,6 +159,7 @@ public class c6_CombiningPublishers extends CombiningPublishersBase {
     }
 
     /**
+     * --------------------------------------------
      * As part of your job as software engineer for broker house, you have also introduced quick local cache to retrieve
      * stocks from. But cache may not be formed yet or is empty. If cache is empty, switch to a live source:
      * `getStocksRest()`.
