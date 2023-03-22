@@ -221,7 +221,7 @@ while(true) {
 Flux.just(1, 2, 3) // main
     .publishOn(Schedulers.elastic()) // Thread-0
     .map(i -> i * 2) // Thread-0
-    .subscribe(System.out::println); // main
+    .subscribe(System.out::println); // Thread-0
 
 ```
 
