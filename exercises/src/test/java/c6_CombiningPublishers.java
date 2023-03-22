@@ -88,7 +88,7 @@ public class c6_CombiningPublishers extends CombiningPublishersBase {
      * Join results from services `numberService1()` and `numberService2()` end-to-end.
      * First `numberService1` emits elements and then `numberService2`. (no interleaving)
      * <p>
-     * Bonus: There are two ways to do this, check out both! - 하나는 뭘까? 그냥 mergeWith?
+     * Bonus: There are two ways to do this, check out both! - 하나는 뭘까?
      * Q? merge로 했는데 왜 통과하누?
      */
     @Test
