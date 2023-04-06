@@ -85,9 +85,8 @@ public class c7_ErrorHandling extends ErrorHandlingBase {
     @Test
     public void have_a_backup() {
         //todo: feel free to change code as you need
-        Flux<String> messages = null;
-        messageNode();
-        backupMessageNode();
+        Flux<String> messages = messageNode()
+                .onErrorResume((throwable) -> backupMessageNode());
 
         //don't change below this line
         StepVerifier.create(messages)
