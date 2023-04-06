@@ -8,6 +8,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -15,6 +16,7 @@ public class TodoService {
 
 	private final TodoRepository todoRepository;
 
+	@Transactional
 	public Mono<Todo> createTodo(final TodoDTO todoDTO) {
 		return todoRepository.save(Todo.builder()
 				.content(todoDTO.content())
@@ -30,6 +32,7 @@ public class TodoService {
 		return todoRepository.findById(todoId);
 	}
 
+	@Transactional
 	public Mono<Todo> updateTodo(final long todoId, final TodoDTO todoDTO) {
 		return todoRepository.findById(todoId)
 				.flatMap(todo -> {
@@ -43,6 +46,7 @@ public class TodoService {
 				});
 	}
 
+	@Transactional
 	public Mono<Void> removeTodo(final long todoId) {
 		return todoRepository.findById(todoId)
 				.flatMap(todoRepository::delete)
