@@ -1,0 +1,24 @@
+### Create
+POST {{baseUrl}}/todos
+Content-Type: application/json
+
+{
+  "content": "스터디"
+}
+
+### Read (All)
+GET {{baseUrl}}/todos
+
+### Read (Single)
+GET {{baseUrl}}/todos/1
+
+### Update
+PUT {{baseUrl}}/todos/11
+Content-Type: application/json
+
+{
+  "content": "스터디11"
+}
+
+### Delete
+DELETE {{baseUrl}}/todos/11

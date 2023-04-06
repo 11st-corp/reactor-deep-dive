@@ -1,0 +1,5 @@
+spring:
+  r2dbc:
+    url: r2dbc:pool:mysql://localhost:3306/todo?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Seoul
+    username: user
+    password: password
