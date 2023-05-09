@@ -1,4 +1,4 @@
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
@@ -10,14 +10,14 @@ import java.util.List;
 /**
  * In Reactor a Sink allows safe manual triggering of signals. We will learn more about multicasting and backpressure in
  * the next chapters.
- *
+ * <p>
  * Read first:
- *
+ * <p>
  * https://projectreactor.io/docs/core/release/reference/#sinks
  * https://projectreactor.io/docs/core/release/reference/#processor-overview
- *
+ * <p>
  * Useful documentation:
- *
+ * <p>
  * https://projectreactor.io/docs/core/release/reference/#which-operator
  * https://projectreactor.io/docs/core/release/api/reactor/core/publisher/Mono.html
  * https://projectreactor.io/docs/core/release/api/reactor/core/publisher/Flux.html
@@ -33,11 +33,11 @@ public class c8_Sinks extends SinksBase {
      */
     @Test
     public void single_shooter() {
-        //todo: feel free to change code as you need
-        Mono<Boolean> operationCompleted = null;
+        Sinks.One<Object> one = Sinks.one();
+        Mono<Boolean> operationCompleted = one.asMono().cast(Boolean.class);
         submitOperation(() -> {
-
             doSomeWork(); //don't change this line
+            one.tryEmitValue(true);
         });
 
         //don't change code below
@@ -54,16 +54,18 @@ public class c8_Sinks extends SinksBase {
      */
     @Test
     public void single_subscriber() {
-        //todo: feel free to change code as you need
-        Flux<Integer> measurements = null;
+        Sinks.Many<Object> many = Sinks.many().unicast().onBackpressureBuffer();
+        Flux<Integer> measurements = many.asFlux().cast(Integer.class);
         submitOperation(() -> {
-
             List<Integer> measures_readings = get_measures_readings(); //don't change this line
+            measures_readings.stream()
+                             .forEach(integer -> many.tryEmitNext(integer));
+            many.tryEmitComplete();
         });
 
         //don't change code below
         StepVerifier.create(measurements
-                                    .delaySubscription(Duration.ofSeconds(6)))
+                                .delaySubscription(Duration.ofSeconds(6)))
                     .expectNext(0x0800, 0x0B64, 0x0504)
                     .verifyComplete();
     }
@@ -74,16 +76,18 @@ public class c8_Sinks extends SinksBase {
      */
     @Test
     public void it_gets_crowded() {
-        //todo: feel free to change code as you need
-        Flux<Integer> measurements = null;
+        Sinks.Many<Object> many = Sinks.many().multicast().onBackpressureBuffer();
+        Flux<Integer> measurements = many.asFlux().cast(Integer.class);
         submitOperation(() -> {
-
             List<Integer> measures_readings = get_measures_readings(); //don't change this line
+            measures_readings.stream()
+                             .forEach(integer -> many.tryEmitNext(integer));
+            many.tryEmitComplete();
         });
 
         //don't change code below
         StepVerifier.create(Flux.merge(measurements
-                                               .delaySubscription(Duration.ofSeconds(1)),
+                                           .delaySubscription(Duration.ofSeconds(1)),
                                        measurements.ignoreElements()))
                     .expectNext(0x0800, 0x0B64, 0x0504)
                     .verifyComplete();
@@ -97,8 +101,7 @@ public class c8_Sinks extends SinksBase {
      */
     @Test
     public void open_24_7() {
-        //todo: set autoCancel parameter to prevent sink from closing
-        Sinks.Many<Integer> sink = Sinks.many().multicast().onBackpressureBuffer();
+        Sinks.Many<Integer> sink = Sinks.many().multicast().onBackpressureBuffer(5, false);
         Flux<Integer> flux = sink.asFlux();
 
         //don't change code below
@@ -139,8 +142,7 @@ public class c8_Sinks extends SinksBase {
      */
     @Test
     public void blue_jeans() {
-        //todo: enable autoCancel parameter to prevent sink from closing
-        Sinks.Many<Integer> sink = Sinks.many().multicast().onBackpressureBuffer();
+        Sinks.Many<Integer> sink = Sinks.many().replay().all();
         Flux<Integer> flux = sink.asFlux();
 
         //don't change code below
@@ -175,7 +177,6 @@ public class c8_Sinks extends SinksBase {
         sub3.verify();
     }
 
-
     /**
      * There is a bug in the code below. May multiple producer threads concurrently generate data on the sink?
      * If yes, how? Find out and fix it.
@@ -187,7 +188,7 @@ public class c8_Sinks extends SinksBase {
 
         for (int i = 1; i <= 50; i++) {
             int finalI = i;
-            new Thread(() -> sink.tryEmitNext(finalI)).start();
+            new Thread(() -> sink.emitNext(Integer.valueOf(finalI), (signalType, emitResult) -> emitResult.isFailure())).start();
         }
 
         //don't change code below
